@@ -61,12 +61,13 @@ export class MobileControls {
     this.updateAvailability();
     this.coarsePointerQuery.addEventListener('change', this.updateAvailability);
     this.compactViewportQuery.addEventListener('change', this.updateAvailability);
-    window.addEventListener('resize', this.handleResume);
+    window.addEventListener('resize', this.handleViewportChange);
     window.addEventListener('orientationchange', this.handleResume);
     window.addEventListener('focus', this.handleResume);
     window.addEventListener('pageshow', this.handleResume);
     window.addEventListener('blur', this.handleBlur);
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    window.visualViewport?.addEventListener('resize', this.handleViewportChange);
     window.requestAnimationFrame(() => this.handleResume());
   }
 
@@ -440,7 +441,13 @@ export class MobileControls {
   };
 
   private handleBlur = (): void => {
-    this.reset();
+    if (document.visibilityState === 'hidden') {
+      this.reset();
+    }
+  };
+
+  private handleViewportChange = (): void => {
+    this.updateAvailability();
   };
 
   private handleResume = (): void => {
