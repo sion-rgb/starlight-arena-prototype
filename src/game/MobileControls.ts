@@ -17,7 +17,9 @@ export class MobileControls {
   private readonly lookDelta: Axis2 = { x: 0, y: 0 };
   private readonly coarsePointerQuery = window.matchMedia('(pointer: coarse)');
   private readonly compactViewportQuery = window.matchMedia('(max-width: 760px)');
-  private readonly useTouchEvents = navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
+  // Modern mobile browsers dispatch reliable pointer events for touch. Keep the
+  // touch fallback only for older browsers so the same gesture is not handled twice.
+  private readonly useTouchEvents = !('PointerEvent' in window);
   private joystickPointerId: number | null = null;
   private lookPointerId: number | null = null;
   private firePointerId: number | null = null;
