@@ -7,6 +7,7 @@ import { EnemyManager } from './EnemyManager';
 import { InputController } from './InputController';
 import { MobileControls } from './MobileControls';
 import { PlayerController } from './PlayerController';
+import { publicAsset } from './publicAsset';
 import { UI } from './UI';
 import { WeaponSystem } from './WeaponSystem';
 
@@ -297,9 +298,9 @@ export class Game {
 
     const floorMaterial = new THREE.MeshStandardMaterial({
       color: 0xc9e6f5,
-      map: this.loadTiledTexture('/assets/polyhaven/painted-concrete/painted_concrete_02_diff_1k.jpg', 9, 9, true),
-      normalMap: this.loadTiledTexture('/assets/polyhaven/painted-concrete/painted_concrete_02_nor_gl_1k.jpg', 9, 9),
-      roughnessMap: this.loadTiledTexture('/assets/polyhaven/painted-concrete/painted_concrete_02_rough_1k.jpg', 9, 9),
+      map: this.loadTiledTexture(publicAsset('assets/polyhaven/painted-concrete/painted_concrete_02_diff_1k.jpg'), 9, 9, true),
+      normalMap: this.loadTiledTexture(publicAsset('assets/polyhaven/painted-concrete/painted_concrete_02_nor_gl_1k.jpg'), 9, 9),
+      roughnessMap: this.loadTiledTexture(publicAsset('assets/polyhaven/painted-concrete/painted_concrete_02_rough_1k.jpg'), 9, 9),
       normalScale: new THREE.Vector2(0.24, 0.24),
       roughness: 0.72,
       metalness: 0.12,
@@ -323,9 +324,9 @@ export class Game {
   private createWalls(): void {
     const wallMaterial = new THREE.MeshStandardMaterial({
       color: 0xa8d0dc,
-      map: this.loadTiledTexture('/assets/polyhaven/factory-wall/factory_wall_diff_1k.jpg', 6, 1, true),
-      normalMap: this.loadTiledTexture('/assets/polyhaven/factory-wall/factory_wall_nor_gl_1k.jpg', 6, 1),
-      roughnessMap: this.loadTiledTexture('/assets/polyhaven/factory-wall/factory_wall_rough_1k.jpg', 6, 1),
+      map: this.loadTiledTexture(publicAsset('assets/polyhaven/factory-wall/factory_wall_diff_1k.jpg'), 6, 1, true),
+      normalMap: this.loadTiledTexture(publicAsset('assets/polyhaven/factory-wall/factory_wall_nor_gl_1k.jpg'), 6, 1),
+      roughnessMap: this.loadTiledTexture(publicAsset('assets/polyhaven/factory-wall/factory_wall_rough_1k.jpg'), 6, 1),
       normalScale: new THREE.Vector2(0.2, 0.2),
       roughness: 0.62,
       metalness: 0.2,
@@ -374,9 +375,9 @@ export class Game {
   private createObstacles(): void {
     const obstacleMaterial = new THREE.MeshStandardMaterial({
       color: 0x8ab8cc,
-      map: this.loadTiledTexture('/assets/polyhaven/factory-wall/factory_wall_diff_1k.jpg', 2, 2, true),
-      normalMap: this.loadTiledTexture('/assets/polyhaven/factory-wall/factory_wall_nor_gl_1k.jpg', 2, 2),
-      roughnessMap: this.loadTiledTexture('/assets/polyhaven/factory-wall/factory_wall_rough_1k.jpg', 2, 2),
+      map: this.loadTiledTexture(publicAsset('assets/polyhaven/factory-wall/factory_wall_diff_1k.jpg'), 2, 2, true),
+      normalMap: this.loadTiledTexture(publicAsset('assets/polyhaven/factory-wall/factory_wall_nor_gl_1k.jpg'), 2, 2),
+      roughnessMap: this.loadTiledTexture(publicAsset('assets/polyhaven/factory-wall/factory_wall_rough_1k.jpg'), 2, 2),
       normalScale: new THREE.Vector2(0.18, 0.18),
       roughness: 0.5,
       metalness: 0.24,

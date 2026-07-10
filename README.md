@@ -2,6 +2,10 @@
 
 A playable third-person Three.js training arena prototype built with Vite and TypeScript.
 
+## Play Online
+
+https://sion-rgb.github.io/starlight-arena-prototype/
+
 ## Requirements
 
 - Node.js 20 or newer

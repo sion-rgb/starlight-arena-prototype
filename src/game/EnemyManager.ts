@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { CollisionSystem } from './CollisionSystem';
+import { publicAsset } from './publicAsset';
 
 type EnemyKind = 'orb' | 'drone' | 'target';
 
@@ -50,14 +51,14 @@ export class EnemyManager {
     private readonly collision: CollisionSystem,
   ) {
     this.enemySkinColor = this.loadSkinTexture(
-      '/assets/polyhaven/painted-concrete/painted_concrete_02_diff_1k.jpg',
+      publicAsset('assets/polyhaven/painted-concrete/painted_concrete_02_diff_1k.jpg'),
       true,
     );
     this.enemySkinNormal = this.loadSkinTexture(
-      '/assets/polyhaven/painted-concrete/painted_concrete_02_nor_gl_1k.jpg',
+      publicAsset('assets/polyhaven/painted-concrete/painted_concrete_02_nor_gl_1k.jpg'),
     );
     this.enemySkinRoughness = this.loadSkinTexture(
-      '/assets/polyhaven/painted-concrete/painted_concrete_02_rough_1k.jpg',
+      publicAsset('assets/polyhaven/painted-concrete/painted_concrete_02_rough_1k.jpg'),
     );
   }
 

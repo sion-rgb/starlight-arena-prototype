@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { VRMLoaderPlugin, type VRM } from '@pixiv/three-vrm';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { publicAsset } from './publicAsset';
 
 export type AvatarKind = 'vrm' | 'glb' | 'placeholder';
 
@@ -24,10 +25,10 @@ export interface LoadedAvatar {
 }
 
 const DEFAULT_AVATAR_URLS = [
-  '/avatars/avatar.vrm',
-  '/avatars/avatar.glb',
-  '/models/avatar.vrm',
-  '/models/avatar.glb',
+  publicAsset('avatars/avatar.vrm'),
+  publicAsset('avatars/avatar.glb'),
+  publicAsset('models/avatar.vrm'),
+  publicAsset('models/avatar.glb'),
 ];
 
 export class AvatarLoader {
@@ -162,7 +163,7 @@ export class AvatarLoader {
 
   private async addImportedWeapon(weapon: THREE.Group, muzzle: THREE.Object3D): Promise<boolean> {
     try {
-      const gltf = await this.gltfLoader.loadAsync('/assets/kenney-blaster/blaster-l.glb');
+      const gltf = await this.gltfLoader.loadAsync(publicAsset('assets/kenney-blaster/blaster-l.glb'));
       const model = gltf.scene;
       const initialBounds = new THREE.Box3().setFromObject(model);
       const initialSize = initialBounds.getSize(new THREE.Vector3());

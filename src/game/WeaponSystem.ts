@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { AudioSystem } from './AudioSystem';
 import { EnemyManager } from './EnemyManager';
+import { publicAsset } from './publicAsset';
 
 interface TimedLine {
   line: THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>;
@@ -279,7 +280,7 @@ export class WeaponSystem {
 
   private async loadWeaponModel(): Promise<void> {
     try {
-      const gltf = await this.modelLoader.loadAsync('/assets/kenney-blaster/blaster-l.glb');
+      const gltf = await this.modelLoader.loadAsync(publicAsset('assets/kenney-blaster/blaster-l.glb'));
       const model = gltf.scene;
       const targetCenter = new THREE.Vector3(0.34, -0.3, -0.88);
       const bounds = new THREE.Box3().setFromObject(model);
