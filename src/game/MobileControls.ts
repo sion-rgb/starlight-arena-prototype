@@ -276,8 +276,12 @@ export class MobileControls {
 
     this.lastTouchMoveTime = event.timeStamp;
     let handled = false;
-    const joystickTouch = this.findTouch(event.touches, this.joystickPointerId);
-    const lookTouch = this.findTouch(event.touches, this.lookPointerId);
+    const joystickTouch =
+      this.findTouch(event.touches, this.joystickPointerId) ??
+      this.findTouch(event.changedTouches, this.joystickPointerId);
+    const lookTouch =
+      this.findTouch(event.touches, this.lookPointerId) ??
+      this.findTouch(event.changedTouches, this.lookPointerId);
 
     if (joystickTouch) {
       this.updateJoystick(joystickTouch.clientX, joystickTouch.clientY);
