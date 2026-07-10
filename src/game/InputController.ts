@@ -112,6 +112,16 @@ export class InputController {
   }
 
   requestPointerLock(): void {
+    // Touch-first browsers do not need Pointer Lock. Requesting it from the
+    // mobile start button can leave some embedded browsers in a transient
+    // gesture state until the page is backgrounded and resumed.
+    if (
+      window.matchMedia('(pointer: coarse)').matches &&
+      !window.matchMedia('(pointer: fine)').matches
+    ) {
+      return;
+    }
+
     if (document.pointerLockElement !== this.canvas) {
       try {
         this.canvas.focus({ preventScroll: true });

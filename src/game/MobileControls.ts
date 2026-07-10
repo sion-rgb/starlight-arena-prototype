@@ -17,9 +17,9 @@ export class MobileControls {
   private readonly lookDelta: Axis2 = { x: 0, y: 0 };
   private readonly coarsePointerQuery = window.matchMedia('(pointer: coarse)');
   private readonly compactViewportQuery = window.matchMedia('(max-width: 760px)');
-  // Modern mobile browsers dispatch reliable pointer events for touch. Keep the
-  // touch fallback only for older browsers so the same gesture is not handled twice.
-  private readonly useTouchEvents = !('PointerEvent' in window);
+  // Touch Events are used as the primary mobile path. They remain reliable in
+  // embedded mobile browsers even when Pointer Events are partially implemented.
+  private readonly useTouchEvents = 'TouchEvent' in window;
   private joystickPointerId: number | null = null;
   private lookPointerId: number | null = null;
   private firePointerId: number | null = null;
@@ -29,9 +29,9 @@ export class MobileControls {
   private frontHeld = false;
   private lastLookX = 0;
   private lastLookY = 0;
-  private lastPointerMoveKey = '';
-  private lastTouchMoveTime = -1;
+  private awaitingResume = false;
   private enabled = false;
+  private gameplayActive = false;
 
   constructor(container: HTMLElement) {
     this.root.className = 'mobile-controls';
@@ -61,21 +61,31 @@ export class MobileControls {
     this.updateAvailability();
     this.coarsePointerQuery.addEventListener('change', this.updateAvailability);
     this.compactViewportQuery.addEventListener('change', this.updateAvailability);
-    window.addEventListener('resize', this.handleViewportChange);
-    window.addEventListener('orientationchange', this.handleResume);
-    window.addEventListener('focus', this.handleResume);
-    window.addEventListener('pageshow', this.handleResume);
+    window.addEventListener('resize', this.updateAvailability);
+    window.addEventListener('orientationchange', this.updateAvailability);
+    window.addEventListener('focus', this.resumeIfNeeded);
+    window.addEventListener('pageshow', this.handlePageShow);
     window.addEventListener('blur', this.handleBlur);
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
-    window.visualViewport?.addEventListener('resize', this.handleViewportChange);
-    window.requestAnimationFrame(() => this.handleResume());
+    window.visualViewport?.addEventListener('resize', this.updateAvailability);
+    window.requestAnimationFrame(this.updateAvailability);
   }
 
   getMoveAxis(): Axis2 {
+    if (!this.gameplayActive) {
+      return { x: 0, y: 0 };
+    }
+
     return { ...this.moveAxis };
   }
 
   consumeLookDelta(): Axis2 {
+    if (!this.gameplayActive) {
+      this.lookDelta.x = 0;
+      this.lookDelta.y = 0;
+      return { x: 0, y: 0 };
+    }
+
     const delta = { ...this.lookDelta };
     this.lookDelta.x = 0;
     this.lookDelta.y = 0;
@@ -83,21 +93,35 @@ export class MobileControls {
   }
 
   consumeFireQueued(): boolean {
+    if (!this.gameplayActive) {
+      this.fireQueued = false;
+      return false;
+    }
+
     const queued = this.fireQueued;
     this.fireQueued = false;
     return queued;
   }
 
   isFiring(): boolean {
-    return this.firing;
+    return this.gameplayActive && this.firing;
   }
 
   isFrontHeld(): boolean {
-    return this.frontHeld;
+    return this.gameplayActive && this.frontHeld;
   }
 
   refresh(): void {
     this.updateAvailability();
+  }
+
+  setGameplayActive(active: boolean): void {
+    if (this.gameplayActive === active) {
+      return;
+    }
+
+    this.gameplayActive = active;
+    this.reset();
   }
 
   reset(): void {
@@ -112,8 +136,8 @@ export class MobileControls {
     this.lookPointerId = null;
     this.firePointerId = null;
     this.frontPointerId = null;
-    this.lastPointerMoveKey = '';
-    this.lastTouchMoveTime = -1;
+    this.lastLookX = 0;
+    this.lastLookY = 0;
     this.joystickKnob.style.transform = 'translate(-50%, -50%)';
   }
 
@@ -171,70 +195,24 @@ export class MobileControls {
   }
 
   private bindPointerTracking(): void {
-    this.root.addEventListener('pointermove', this.onPointerMove, { passive: false });
-    this.root.addEventListener('pointerup', this.onPointerEnd);
-    this.root.addEventListener('pointercancel', this.onPointerEnd);
-    window.addEventListener('pointermove', this.onPointerMove, { passive: false });
+    const options = { passive: false };
+
+    this.joystickBase.addEventListener('pointermove', this.onPointerMove, options);
+    this.lookArea.addEventListener('pointermove', this.onPointerMove, options);
+    this.joystickBase.addEventListener('pointerup', this.onPointerEnd);
+    this.joystickBase.addEventListener('pointercancel', this.onPointerEnd);
+    this.lookArea.addEventListener('pointerup', this.onPointerEnd);
+    this.lookArea.addEventListener('pointercancel', this.onPointerEnd);
     window.addEventListener('pointerup', this.onPointerEnd);
     window.addEventListener('pointercancel', this.onPointerEnd);
   }
 
   private bindTouchFallback(): void {
-    const options = { passive: false };
-
-    this.joystickBase.addEventListener('touchstart', (event) => {
-      const touch = this.getFirstTouch(event.changedTouches);
-
-      if (!this.enabled || this.joystickPointerId !== null || !touch) {
-        return;
-      }
-
-      this.preventDefault(event);
-      this.joystickPointerId = touch.identifier;
-      this.updateJoystick(touch.clientX, touch.clientY);
-    }, options);
-
-    this.lookArea.addEventListener('touchstart', (event) => {
-      const touch = this.getFirstTouch(event.changedTouches);
-
-      if (!this.enabled || this.lookPointerId !== null || !touch) {
-        return;
-      }
-
-      this.preventDefault(event);
-      this.lookPointerId = touch.identifier;
-      this.lastLookX = touch.clientX;
-      this.lastLookY = touch.clientY;
-    }, options);
-
-    this.fireButton.addEventListener('touchstart', (event) => {
-      const touch = this.getFirstTouch(event.changedTouches);
-
-      if (!this.enabled || this.firePointerId !== null || !touch) {
-        return;
-      }
-
-      this.preventDefault(event);
-      this.firePointerId = touch.identifier;
-      this.firing = true;
-      this.fireQueued = true;
-    }, options);
-
-    this.frontButton.addEventListener('touchstart', (event) => {
-      const touch = this.getFirstTouch(event.changedTouches);
-
-      if (!this.enabled || this.frontPointerId !== null || !touch) {
-        return;
-      }
-
-      this.preventDefault(event);
-      this.frontPointerId = touch.identifier;
-      this.frontHeld = true;
-    }, options);
-
-    this.root.addEventListener('touchmove', this.onTouchMove, options);
-    this.root.addEventListener('touchend', this.onTouchEnd, options);
-    this.root.addEventListener('touchcancel', this.onTouchEnd, options);
+    // Bind at capture phase and resolve the touch by coordinates. Some in-app
+    // browsers fail to deliver the initial move when a transformed overlay is
+    // the event target, while capture-phase Touch Events still arrive here.
+    const options = { passive: false, capture: true };
+    window.addEventListener('touchstart', this.onTouchStart, options);
     window.addEventListener('touchmove', this.onTouchMove, options);
     window.addEventListener('touchend', this.onTouchEnd, options);
     window.addEventListener('touchcancel', this.onTouchEnd, options);
@@ -244,14 +222,6 @@ export class MobileControls {
     if (!this.acceptsPointer(event)) {
       return;
     }
-
-    const eventKey = `${event.pointerId}:${event.timeStamp}:${event.clientX}:${event.clientY}`;
-
-    if (eventKey === this.lastPointerMoveKey) {
-      return;
-    }
-
-    this.lastPointerMoveKey = eventKey;
 
     let handled = false;
 
@@ -280,12 +250,64 @@ export class MobileControls {
     }
   };
 
-  private onTouchMove = (event: TouchEvent): void => {
-    if (event.timeStamp === this.lastTouchMoveTime) {
+  private onTouchStart = (event: TouchEvent): void => {
+    if (!this.enabled || !this.gameplayActive) {
       return;
     }
 
-    this.lastTouchMoveTime = event.timeStamp;
+    let handled = false;
+
+    for (let index = 0; index < event.changedTouches.length; index += 1) {
+      const touch = event.changedTouches.item(index);
+
+      if (!touch) {
+        continue;
+      }
+
+      if (this.isInside(this.fireButton, touch.clientX, touch.clientY) && this.firePointerId === null) {
+        this.firePointerId = touch.identifier;
+        this.firing = true;
+        this.fireQueued = true;
+        handled = true;
+        continue;
+      }
+
+      if (this.isInside(this.frontButton, touch.clientX, touch.clientY) && this.frontPointerId === null) {
+        this.frontPointerId = touch.identifier;
+        this.frontHeld = true;
+        handled = true;
+        continue;
+      }
+
+      if (this.isInside(this.joystickBase, touch.clientX, touch.clientY) && this.joystickPointerId === null) {
+        this.joystickPointerId = touch.identifier;
+        this.updateJoystick(touch.clientX, touch.clientY);
+        handled = true;
+        continue;
+      }
+
+      if (
+        this.lookPointerId === null &&
+        this.isInside(this.lookArea, touch.clientX, touch.clientY) &&
+        !this.isExternalButton(event.target)
+      ) {
+        this.lookPointerId = touch.identifier;
+        this.lastLookX = touch.clientX;
+        this.lastLookY = touch.clientY;
+        handled = true;
+      }
+    }
+
+    if (handled) {
+      this.preventDefault(event);
+    }
+  };
+
+  private onTouchMove = (event: TouchEvent): void => {
+    if (!this.enabled || !this.gameplayActive) {
+      return;
+    }
+
     let handled = false;
     const joystickTouch =
       this.findTouch(event.touches, this.joystickPointerId) ??
@@ -390,7 +412,12 @@ export class MobileControls {
   }
 
   private acceptsPointer(event: PointerEvent): boolean {
-    return this.enabled && event.pointerType !== 'mouse' && !(this.useTouchEvents && event.pointerType === 'touch');
+    return (
+      this.enabled &&
+      this.gameplayActive &&
+      event.pointerType !== 'mouse' &&
+      !(this.useTouchEvents && event.pointerType === 'touch')
+    );
   }
 
   private capturePointer(element: HTMLElement, pointerId: number): void {
@@ -399,10 +426,6 @@ export class MobileControls {
     } catch {
       // Some mobile browsers do not expose pointer capture for touch input.
     }
-  }
-
-  private getFirstTouch(touches: TouchList): Touch | null {
-    return touches.item(0);
   }
 
   private findTouch(touches: TouchList, identifier: number | null): Touch | null {
@@ -427,6 +450,25 @@ export class MobileControls {
     }
   }
 
+  private isInside(element: HTMLElement, clientX: number, clientY: number): boolean {
+    const rect = element.getBoundingClientRect();
+    return (
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+    );
+  }
+
+  private isExternalButton(target: EventTarget | null): boolean {
+    if (!(target instanceof Element)) {
+      return false;
+    }
+
+    const button = target.closest('button');
+    return Boolean(button && !button.classList.contains('fire-button') && !button.classList.contains('front-button'));
+  }
+
   private updateAvailability = (): void => {
     const userAgent = navigator.userAgent;
     const mobileUserAgent = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(userAgent);
@@ -442,25 +484,37 @@ export class MobileControls {
 
   private handleBlur = (): void => {
     if (document.visibilityState === 'hidden') {
+      this.awaitingResume = true;
       this.reset();
     }
-  };
-
-  private handleViewportChange = (): void => {
-    this.updateAvailability();
-  };
-
-  private handleResume = (): void => {
-    this.reset();
-    this.updateAvailability();
   };
 
   private handleVisibilityChange = (): void => {
     if (document.visibilityState === 'hidden') {
+      this.awaitingResume = true;
       this.reset();
       return;
     }
 
-    this.handleResume();
+    this.resumeIfNeeded();
+  };
+
+  private handlePageShow = (event: PageTransitionEvent): void => {
+    if (event.persisted) {
+      this.awaitingResume = true;
+    }
+
+    this.resumeIfNeeded();
+  };
+
+  private resumeIfNeeded = (): void => {
+    this.updateAvailability();
+
+    if (!this.awaitingResume) {
+      return;
+    }
+
+    this.awaitingResume = false;
+    this.reset();
   };
 }

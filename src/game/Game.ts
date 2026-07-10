@@ -103,8 +103,16 @@ export class Game {
   }
 
   private bindEvents(): void {
-    window.addEventListener('resize', () => this.resize());
-    this.resizeObserver = new ResizeObserver(() => this.resize());
+    window.addEventListener('resize', this.scheduleResize);
+    window.visualViewport?.addEventListener('resize', this.scheduleResize);
+    window.addEventListener('focus', this.scheduleResize);
+    window.addEventListener('pageshow', this.scheduleResize);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.scheduleResize();
+      }
+    });
+    this.resizeObserver = new ResizeObserver(this.scheduleResize);
     this.resizeObserver.observe(this.container);
     window.addEventListener('pointerdown', () => void this.audio.resume());
     window.addEventListener('keydown', () => void this.audio.resume());
@@ -117,6 +125,7 @@ export class Game {
       this.resetGame();
       this.state = 'playing';
       this.ui.showPlaying();
+      this.mobileControls.setGameplayActive(true);
       this.input.requestPointerLock();
       void this.audio.resume();
     });
@@ -125,6 +134,7 @@ export class Game {
       this.resetGame();
       this.state = 'playing';
       this.ui.showPlaying();
+      this.mobileControls.setGameplayActive(true);
       this.input.requestPointerLock();
       void this.audio.resume();
     });
@@ -220,6 +230,7 @@ export class Game {
     this.score = 0;
     this.defeatedTargets = 0;
     this.state = 'menu';
+    this.mobileControls.setGameplayActive(false);
     this.input.reset();
     this.player.reset();
     this.cameraController.reset();
@@ -246,6 +257,7 @@ export class Game {
 
     if (defeated) {
       this.state = 'defeat';
+      this.mobileControls.setGameplayActive(false);
       this.ui.showGameOver(this.score);
       document.exitPointerLock();
     }
@@ -253,6 +265,7 @@ export class Game {
 
   private completeTraining(): void {
     this.state = 'victory';
+    this.mobileControls.setGameplayActive(false);
     this.ui.showVictory(this.score);
 
     if (document.pointerLockElement) {
@@ -564,6 +577,11 @@ export class Game {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(width, height, false);
   }
+
+  private scheduleResize = (): void => {
+    this.resize();
+    window.requestAnimationFrame(() => this.resize());
+  };
 
   private updateDebugState(): void {
     this.debugFrame += 1;
