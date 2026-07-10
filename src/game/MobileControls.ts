@@ -61,7 +61,13 @@ export class MobileControls {
     this.updateAvailability();
     this.coarsePointerQuery.addEventListener('change', this.updateAvailability);
     this.compactViewportQuery.addEventListener('change', this.updateAvailability);
-    window.addEventListener('blur', () => this.reset());
+    window.addEventListener('resize', this.handleResume);
+    window.addEventListener('orientationchange', this.handleResume);
+    window.addEventListener('focus', this.handleResume);
+    window.addEventListener('pageshow', this.handleResume);
+    window.addEventListener('blur', this.handleBlur);
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    window.requestAnimationFrame(() => this.handleResume());
   }
 
   getMoveAxis(): Axis2 {
@@ -87,6 +93,10 @@ export class MobileControls {
 
   isFrontHeld(): boolean {
     return this.frontHeld;
+  }
+
+  refresh(): void {
+    this.updateAvailability();
   }
 
   reset(): void {
@@ -427,5 +437,23 @@ export class MobileControls {
     if (!this.enabled) {
       this.reset();
     }
+  };
+
+  private handleBlur = (): void => {
+    this.reset();
+  };
+
+  private handleResume = (): void => {
+    this.reset();
+    this.updateAvailability();
+  };
+
+  private handleVisibilityChange = (): void => {
+    if (document.visibilityState === 'hidden') {
+      this.reset();
+      return;
+    }
+
+    this.handleResume();
   };
 }

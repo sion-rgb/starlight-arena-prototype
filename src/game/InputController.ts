@@ -181,7 +181,12 @@ export class InputController {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         this.releaseHeldControls();
+        this.mobileControls.reset();
+        return;
       }
+
+      this.releaseHeldControls();
+      this.mobileControls.refresh();
     });
   }
 
