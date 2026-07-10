@@ -29,6 +29,8 @@ export class MobileControls {
   private frontHeld = false;
   private lastLookX = 0;
   private lastLookY = 0;
+  private lastPointerMoveKey = '';
+  private lastTouchMoveTime = -1;
   private enabled = false;
 
   constructor(container: HTMLElement) {
@@ -99,6 +101,8 @@ export class MobileControls {
     this.lookPointerId = null;
     this.firePointerId = null;
     this.frontPointerId = null;
+    this.lastPointerMoveKey = '';
+    this.lastTouchMoveTime = -1;
     this.joystickKnob.style.transform = 'translate(-50%, -50%)';
   }
 
@@ -156,6 +160,9 @@ export class MobileControls {
   }
 
   private bindPointerTracking(): void {
+    this.root.addEventListener('pointermove', this.onPointerMove, { passive: false });
+    this.root.addEventListener('pointerup', this.onPointerEnd);
+    this.root.addEventListener('pointercancel', this.onPointerEnd);
     window.addEventListener('pointermove', this.onPointerMove, { passive: false });
     window.addEventListener('pointerup', this.onPointerEnd);
     window.addEventListener('pointercancel', this.onPointerEnd);
@@ -214,6 +221,9 @@ export class MobileControls {
       this.frontHeld = true;
     }, options);
 
+    this.root.addEventListener('touchmove', this.onTouchMove, options);
+    this.root.addEventListener('touchend', this.onTouchEnd, options);
+    this.root.addEventListener('touchcancel', this.onTouchEnd, options);
     window.addEventListener('touchmove', this.onTouchMove, options);
     window.addEventListener('touchend', this.onTouchEnd, options);
     window.addEventListener('touchcancel', this.onTouchEnd, options);
@@ -223,6 +233,14 @@ export class MobileControls {
     if (!this.acceptsPointer(event)) {
       return;
     }
+
+    const eventKey = `${event.pointerId}:${event.timeStamp}:${event.clientX}:${event.clientY}`;
+
+    if (eventKey === this.lastPointerMoveKey) {
+      return;
+    }
+
+    this.lastPointerMoveKey = eventKey;
 
     let handled = false;
 
@@ -252,6 +270,11 @@ export class MobileControls {
   };
 
   private onTouchMove = (event: TouchEvent): void => {
+    if (event.timeStamp === this.lastTouchMoveTime) {
+      return;
+    }
+
+    this.lastTouchMoveTime = event.timeStamp;
     let handled = false;
     const joystickTouch = this.findTouch(event.touches, this.joystickPointerId);
     const lookTouch = this.findTouch(event.touches, this.lookPointerId);
