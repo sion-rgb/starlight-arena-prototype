@@ -1,0 +1,438 @@
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #13213f;
+  background: #dff8ff;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  touch-action: none;
+}
+
+#app {
+  position: relative;
+  background: #dff8ff;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+button {
+  border: 0;
+  color: inherit;
+  font: inherit;
+}
+
+.ui-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.hud-panel {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: grid;
+  grid-template-columns: 58px 154px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid rgba(102, 212, 240, 0.58);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 10px 30px rgba(67, 136, 178, 0.18);
+  backdrop-filter: blur(14px);
+}
+
+.pilot-avatar {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border: 2px solid rgba(104, 238, 255, 0.85);
+  border-radius: 50%;
+  background: #ffe6f4;
+}
+
+.avatar-hair {
+  position: absolute;
+  top: -12px;
+  left: -8px;
+  width: 72px;
+  height: 42px;
+  border-radius: 50%;
+  background: #6fd8ff;
+}
+
+.avatar-face {
+  position: absolute;
+  left: 10px;
+  bottom: 7px;
+  width: 34px;
+  height: 35px;
+  border-radius: 46% 46% 50% 50%;
+  background: #ffd6c8;
+}
+
+.avatar-eye {
+  position: absolute;
+  top: 14px;
+  width: 5px;
+  height: 8px;
+  border-radius: 50%;
+  background: #25426d;
+}
+
+.avatar-eye.left {
+  left: 9px;
+}
+
+.avatar-eye.right {
+  right: 9px;
+}
+
+.hud-stack {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.hud-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.hud-row span {
+  color: #49627f;
+  font-weight: 700;
+}
+
+.hud-row strong {
+  min-width: 48px;
+  color: #14284f;
+  font-size: 14px;
+  text-align: right;
+}
+
+.health-track {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(44, 72, 112, 0.16);
+}
+
+.health-track span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5dffbf, #7ff5ff);
+  transition: width 120ms ease;
+}
+
+.restart-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  min-width: 92px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(102, 212, 240, 0.58);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 10px 30px rgba(67, 136, 178, 0.18);
+  color: #17345e;
+  font-size: 13px;
+  font-weight: 800;
+  pointer-events: auto;
+}
+
+.restart-button:active,
+.primary-button:active,
+.fire-button:active,
+.front-button:active {
+  transform: translateY(1px);
+}
+
+.crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  transform: translate(-50%, -50%);
+  transition:
+    width 120ms ease,
+    height 120ms ease;
+}
+
+.ui-layer.aiming .crosshair {
+  width: 22px;
+  height: 22px;
+}
+
+.crosshair span {
+  position: absolute;
+  display: block;
+  border-radius: 99px;
+  background: rgba(26, 63, 103, 0.78);
+  box-shadow: 0 0 8px rgba(128, 244, 255, 0.95);
+}
+
+.crosshair span:nth-child(1),
+.crosshair span:nth-child(2) {
+  left: 50%;
+  width: 2px;
+  height: 9px;
+  transform: translateX(-50%);
+}
+
+.crosshair span:nth-child(1) {
+  top: 0;
+}
+
+.crosshair span:nth-child(2) {
+  bottom: 0;
+}
+
+.crosshair span:nth-child(3),
+.crosshair span:nth-child(4) {
+  top: 50%;
+  width: 9px;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+.crosshair span:nth-child(3) {
+  left: 0;
+}
+
+.crosshair span:nth-child(4) {
+  right: 0;
+}
+
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(224, 248, 255, 0.34);
+  overflow: hidden;
+  isolation: isolate;
+  pointer-events: auto;
+  transition:
+    opacity 160ms ease,
+    visibility 160ms ease;
+}
+
+.game-overlay.hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.overlay-art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  background-position: center;
+  background-size: cover;
+  transition: opacity 220ms ease;
+}
+
+.game-overlay.victory,
+.game-overlay.defeat {
+  background: rgba(8, 18, 42, 0.42);
+}
+
+.game-overlay.victory .overlay-art {
+  opacity: 0.8;
+  background-image: url('/images/victory-arena.png');
+}
+
+.game-overlay.defeat .overlay-art {
+  opacity: 0.8;
+  background-image: url('/images/defeat-arena.png');
+}
+
+.overlay-panel {
+  position: relative;
+  z-index: 1;
+  width: min(360px, calc(100vw - 48px));
+  padding: 24px;
+  border: 1px solid rgba(102, 212, 240, 0.6);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 20px 70px rgba(67, 136, 178, 0.22);
+  text-align: center;
+  backdrop-filter: blur(16px);
+}
+
+.overlay-panel h1 {
+  margin: 0;
+  color: #13284f;
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.overlay-panel p {
+  margin: 10px 0 20px;
+  color: #49627f;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.primary-button {
+  min-width: 130px;
+  min-height: 42px;
+  padding: 0 20px;
+  border-radius: 8px;
+  background: #6ff2ff;
+  color: #10254b;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(37, 184, 211, 0.28);
+}
+
+.mobile-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: none;
+  pointer-events: none;
+}
+
+.mobile-controls.mobile-active {
+  display: block;
+}
+
+.joystick-base {
+  position: absolute;
+  left: 22px;
+  bottom: 22px;
+  width: 116px;
+  height: 116px;
+  border: 1px solid rgba(100, 212, 238, 0.72);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.38);
+  box-shadow: 0 10px 28px rgba(67, 136, 178, 0.16);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(111, 242, 255, 0.86);
+  box-shadow: 0 8px 18px rgba(22, 164, 196, 0.25);
+  transform: translate(-50%, -50%);
+}
+
+.look-area {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 58vw;
+  height: 100%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.fire-button {
+  position: absolute;
+  right: 28px;
+  bottom: 28px;
+  width: 78px;
+  height: 78px;
+  border: 1px solid rgba(255, 133, 214, 0.72);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  color: #ff4fac;
+  font-size: 38px;
+  line-height: 1;
+  box-shadow: 0 10px 28px rgba(211, 75, 153, 0.18);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.front-button {
+  position: absolute;
+  right: 30px;
+  bottom: 116px;
+  width: 76px;
+  height: 38px;
+  border: 1px solid rgba(100, 212, 238, 0.72);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+  color: #17345e;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(67, 136, 178, 0.16);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+@media (pointer: coarse), (max-width: 760px) {
+  .hud-panel {
+    top: 10px;
+    left: 10px;
+    grid-template-columns: 46px minmax(126px, 1fr);
+    max-width: calc(100vw - 116px);
+    padding: 8px;
+  }
+
+  .pilot-avatar {
+    width: 44px;
+    height: 44px;
+  }
+
+  .restart-button {
+    top: 10px;
+    right: 10px;
+    min-width: 86px;
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .hud-row {
+    font-size: 10px;
+  }
+
+  .hud-row strong {
+    font-size: 12px;
+  }
+}
